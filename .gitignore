@@ -1,0 +1,54 @@
+# ── Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ── Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# ── Trained model files (large weights — store in Git LFS or external cloud)
+*.h5
+*.npz
+ml/models/trained/*.h5
+ml/models/trained/*.pkl
+
+# ── Local Keras & DB
+.keras/
+*.db
+backend/database/neurofusion.db
+database/neurofusion.db
+
+# ── Dataset (download separately)
+data/raw/
+data/processed/
+
+# ── Streamlit
+.streamlit/
+
+# ── Jupyter / IPython
+.ipynb_checkpoints/
+*.ipynb
+
+# ── OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDEs
+.idea/
+.vscode/
+*.swp
+
+# ── Logs
+*.log
+logs/
+
+# ── Distribution
+dist/
+build/
+*.egg-info/

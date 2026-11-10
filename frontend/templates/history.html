@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Case History — NeuroFusion AI{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Header banner -->
+    <div class="col-12 mb-3">
+        <div class="card-custom">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h3 class="fw-bold mb-1" style="color: #1e293b; font-size:1.3rem;">Patient Case History &amp; Diagnostic Registry</h3>
+                    <p class="text-muted mb-0" style="font-size: 0.88rem;">
+                        Central institutional repository of historical patient evaluations and visual explainability records.
+                    </p>
+                </div>
+                <div>
+                    <span class="badge bg-light text-dark border px-3 py-2 fw-medium">
+                        {{ analyses|length }} Total Recorded Evaluations
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filters -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card-custom py-3">
+            <form method="GET" action="{{ url_for('history_view') }}" class="row g-2 align-items-center">
+                <div class="col-12 col-md-6 col-lg-7">
+                    <input type="text" name="search" class="form-control" placeholder="Search by Patient Name …" value="{{ search_query }}">
+                </div>
+                <div class="col-8 col-md-4 col-lg-3">
+                    <select name="filter_class" class="form-select">
+                        <option value="">All Pathology Classes</option>
+                        {% for c in available_classes %}
+                        <option value="{{ c }}" {% if filter_class == c %}selected{% endif %}>{{ c|replace('_', ' ')|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-4 col-md-2 col-lg-2 d-flex gap-1">
+                    <button type="submit" class="btn btn-primary-custom flex-grow-1">Filter</button>
+                    {% if search_query or filter_class %}
+                    <a href="{{ url_for('history_view') }}" class="btn btn-outline-secondary">Reset</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Records Table & Accordion -->
+<div class="row">
+    <div class="col-12">
+        <div class="card-custom">
+            {% if analyses %}
+            <div class="accordion" id="historyAccordion">
+                {% for a in analyses %}
+                <div class="accordion-item mb-2 border rounded-3 overflow-hidden">
+                    <h2 class="accordion-header" id="heading{{ a.id }}">
+                        <button class="accordion-button collapsed bg-light py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ a.id }}" aria-expanded="false" aria-controls="collapse{{ a.id }}">
+                            <div class="d-flex justify-content-between align-items-center w-100 me-3 flex-wrap gap-2">
+                                <div>
+                                    <strong class="text-primary me-2">{{ a.patient_id }}</strong>
+                                    <span class="badge bg-white text-dark border me-2">{{ a.gender }}, Age {{ a.age or '—' }}</span>
+                                    <span class="text-muted" style="font-size:0.82rem;">Evaluated: {{ a.analysis_date }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-bold" style="color:#0f172a;">{{ (a.predicted_class or '')|replace('_', ' ')|title }}</span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold">
+                                        {{ "%.1f"|format((a.confidence or 0) * 100) }}%
+                                    </span>
+                                </div>
+                            </div>
+                        </button>
+                    </h2>
+                    <div id="collapse{{ a.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ a.id }}" data-bs-parent="#historyAccordion">
+                        <div class="accordion-body bg-white p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+                                <div>
+                                    <span class="text-muted" style="font-size:0.85rem;">Evaluation Record ID:</span>
+                                    <strong>#{{ a.id }}</strong> &bull;
+                                    <span class="text-muted" style="font-size:0.85rem;">MRI Sequence:</span>
+                                    <code>{{ a.mri_filename or 'Sequence.png' }}</code>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('reanalyze', patient_id=a.patient_id) }}" class="btn btn-primary-custom btn-sm">
+                                        🔄 Re-Analyze Patient Record
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="row g-4">
+                                <!-- Anamnesis Profile -->
+                                <div class="col-12 col-md-6">
+                                    <h6 class="fw-bold text-secondary mb-2" style="font-size:0.85rem; text-transform:uppercase;">
+                                        Patient Clinical Anamnesis
+                                    </h6>
+                                    <div class="p-3 bg-light rounded-2 border" style="font-size:0.88rem;">
+                                        <div class="row g-2">
+                                            <div class="col-6"><strong>Persistent Headache:</strong> {{ a.headache or '—' }}</div>
+                                            <div class="col-6"><strong>Visual Deficits:</strong> {{ a.vision_problems or '—' }}</div>
+                                            <div class="col-6"><strong>Epileptic Episodes:</strong> {{ a.seizures or '—' }}</div>
+                                            <div class="col-6"><strong>Nausea / Vomiting:</strong> {{ a.nausea or '—' }}</div>
+                                            <div class="col-12"><strong>Cognitive Impairment:</strong> {{ a.memory_loss or '—' }}</div>
+                                        </div>
+                                        {% if a.notes %}
+                                        <hr class="my-2">
+                                        <div><strong>Attending Notes:</strong> {{ a.notes }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Stored Visual Media -->
+                                <div class="col-12 col-md-6">
+                                    <h6 class="fw-bold text-secondary mb-2" style="font-size:0.85rem; text-transform:uppercase;">
+                                        Archived Diagnostic Scans &amp; Grad-CAM Saliency
+                                    </h6>
+                                    <div class="row g-2">
+                                        {% if a.mri_image_path %}
+                                        <div class="col-6 text-center">
+                                            <div class="border rounded p-1 bg-white">
+                                                <small class="text-muted d-block" style="font-size:0.75rem;">Diagnostic MRI</small>
+                                                <img src="{{ url_for('media_file', filename=a.mri_image_path|replace('\\', '/')|basename) }}" class="img-fluid rounded border mt-1" alt="Original MRI">
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% if a.gradcam_image_path %}
+                                        <div class="col-6 text-center">
+                                            <div class="border rounded p-1 bg-white">
+                                                <small class="text-primary d-block" style="font-size:0.75rem;">Grad-CAM Saliency</small>
+                                                <img src="{{ url_for('media_file', filename=a.gradcam_image_path|replace('\\', '/')|basename) }}" class="img-fluid rounded border mt-1" alt="Grad-CAM">
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% if not a.mri_image_path and not a.gradcam_image_path %}
+                                        <div class="col-12 text-muted" style="font-size:0.82rem;">
+                                            No visual media archived for this legacy entry.
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <div style="font-size: 2.5rem;">📋</div>
+                <h5 class="fw-bold mt-2 text-secondary">No Records Found</h5>
+                <p class="mb-3" style="font-size: 0.88rem;">No historical analyses match your filter criteria.</p>
+                <a href="{{ url_for('analysis_view') }}" class="btn btn-primary-custom btn-sm">
+                    Execute New Analysis
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

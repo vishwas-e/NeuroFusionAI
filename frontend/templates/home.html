@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% block title %}Home — NeuroFusion AI{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Doctor profile card */
+    .doctor-profile-card {
+        background: #000000;
+        border: 1px solid #262626;
+        border-radius: 8px;
+        padding: 1.75rem;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 1.75rem;
+        position: relative;
+    }
+    .doctor-avatar {
+        width: 80px; height: 80px;
+        border-radius: 50%;
+        background: #171717;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        flex-shrink: 0;
+        border: 2px solid #404040;
+    }
+    .doctor-info h3 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+        color: #ffffff;
+    }
+    .doctor-info .role-badge {
+        display: inline-block;
+        background: #171717;
+        border: 1px solid #404040;
+        color: #ffffff;
+        border-radius: 20px;
+        padding: 2px 12px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    .doctor-info .meta {
+        font-size: 0.83rem;
+        color: #a3a3a3;
+        line-height: 1.6;
+    }
+    .doctor-info .meta span { margin-right: 1rem; }
+
+    /* System overview section */
+    .overview-card {
+        background: #ffffff;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 1.5rem;
+        height: 100%;
+    }
+    .overview-icon {
+        width: 44px; height: 44px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        margin-bottom: 0.75rem;
+        background: #f5f5f5;
+        color: #000000;
+        border: 1px solid #e5e5e5;
+    }
+
+    /* Stat tiles */
+    .stat-tile {
+        background: #ffffff;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .stat-tile .stat-icon {
+        width: 48px; height: 48px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+        background: #fafafa;
+        border: 1px solid #e5e5e5;
+    }
+    .stat-tile .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: 2px;
+        color: #000000;
+    }
+    .stat-tile .stat-label {
+        font-size: 0.8rem;
+        color: #737373;
+        font-weight: 500;
+    }
+
+    /* Recent cases */
+    .section-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #000000;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e5e5e5;
+    }
+
+    .quick-action {
+        background: #ffffff;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.15s ease;
+        height: 100%;
+    }
+    .quick-action:hover {
+        border-color: #000000;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        color: inherit;
+    }
+    .quick-action .qa-icon {
+        width: 46px; height: 46px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        flex-shrink: 0;
+        background: #fafafa;
+        border: 1px solid #e5e5e5;
+    }
+    .quick-action h6 { font-weight: 600; margin-bottom: 3px; color: #000000; font-size: 0.95rem; }
+    .quick-action p { font-size: 0.8rem; color: #737373; margin: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ═══ DOCTOR PROFILE BANNER ═══ -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="doctor-profile-card">
+            <div class="doctor-avatar">👨‍⚕️</div>
+            <div class="doctor-info">
+                <h3>{{ session['user'].get('full_name', 'Dr. Attending Specialist') }}</h3>
+                <div class="role-badge">{{ session['user'].get('role', 'Radiologist') }}</div>
+                <div class="meta">
+                    <span>🏥 Department of Neuroradiology</span>
+                    <span>🔬 Neuro-Oncology Division</span>
+                    <span>🕒 Session Active</span>
+                </div>
+                <div class="meta mt-1" style="color:#64748b; font-size:0.78rem;">
+                    Welcome back. All AI inference subsystems are operational and ready for diagnostic triaging.
+                </div>
+            </div>
+            <div class="ms-auto text-end d-none d-md-block" style="position:relative; z-index:1;">
+                <div style="font-size:0.75rem; color:#a3a3a3; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px;">System Status</div>
+                <div style="font-size:0.88rem; color:#ffffff; font-weight:600;">● Online</div>
+                <div style="font-size:0.75rem; color:#a3a3a3; margin-top:6px;">{{ total_cases }} Cases Logged</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ STATS ROW ═══ -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile">
+            <div class="stat-icon">🗂️</div>
+            <div>
+                <div class="stat-value">{{ total_cases }}</div>
+                <div class="stat-label">Total Cases</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile">
+            <div class="stat-icon">🎯</div>
+            <div>
+                <div class="stat-value">93.4%</div>
+                <div class="stat-label">Diagnostic Accuracy</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile">
+            <div class="stat-icon">⚡</div>
+            <div>
+                <div class="stat-value">&lt;1.5s</div>
+                <div class="stat-label">Inference Latency</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-tile">
+            <div class="stat-icon">🧬</div>
+            <div>
+                <div class="stat-value">4</div>
+                <div class="stat-label">Pathology Classes</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- ═══ QUICK ACTIONS ═══ -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="section-title">Quick Actions</div>
+    </div>
+    <div class="col-12 col-md-4">
+        <a href="{{ url_for('intake_view') }}" class="quick-action">
+            <div class="qa-icon">📋</div>
+            <div>
+                <h6>New Patient Intake</h6>
+                <p>Upload MRI scan and enter clinical biomarkers to begin AI-assisted diagnosis</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-12 col-md-4">
+        <a href="{{ url_for('patients_view') }}" class="quick-action">
+            <div class="qa-icon">👥</div>
+            <div>
+                <h6>Patient Registry</h6>
+                <p>Browse all registered patient records, archived scans and diagnostic history</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-12 col-md-4">
+        <a href="{{ url_for('analysis_view') }}" class="quick-action">
+            <div class="qa-icon">🔬</div>
+            <div>
+                <h6>Analysis Workstation</h6>
+                <p>Review the latest AI diagnostic report and Grad-CAM saliency heatmaps</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- ═══ RECENT CASES ═══ -->
+<div class="row">
+    <div class="col-12">
+        <div class="section-title">Recent Diagnostic Cases</div>
+        <div class="card-custom p-0 overflow-hidden">
+            {% if recent_cases %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead style="background:#f8fafc;">
+                        <tr style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; color:#64748b;">
+                            <th class="px-4 py-3">Patient Name</th>
+                            <th class="py-3">Demographics</th>
+                            <th class="py-3">Pathology Finding</th>
+                            <th class="py-3">Confidence</th>
+                            <th class="py-3">Date</th>
+                            <th class="py-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size:0.87rem;">
+                        {% for c in recent_cases %}
+                        <tr>
+                            <td class="px-4 py-3"><strong>{{ c.patient_id }}</strong></td>
+                            <td class="py-3">{{ c.gender or '—' }}, Age {{ c.age or '—' }}</td>
+                            <td class="py-3">
+                                <span class="badge bg-light text-dark border px-2 py-1">
+                                    {{ (c.predicted_class or '')|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <strong class="text-primary">{{ "%.1f"|format((c.confidence or 0) * 100) }}%</strong>
+                            </td>
+                            <td class="py-3 text-muted">{{ c.analysis_date }}</td>
+                            <td class="py-3">
+                                <a href="{{ url_for('analysis_view', id=c.id) }}" class="btn btn-outline-primary btn-sm" style="font-size:0.78rem; border-radius:6px;">
+                                    View Report
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <div style="font-size:2.5rem; margin-bottom:0.75rem;">🗂️</div>
+                <div style="font-weight:600; color:#475569;">No cases logged yet</div>
+                <div style="font-size:0.83rem; margin-top:4px;">
+                    <a href="{{ url_for('intake_view') }}" style="color:#0284c7;">Start a New Intake</a> to run the first diagnostic evaluation.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

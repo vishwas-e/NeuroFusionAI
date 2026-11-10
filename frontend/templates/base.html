@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NeuroFusion AI — Clinical Radiology Workstation{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-accent: #000000;
+            --primary-hover: #262626;
+            --dark-sidebar: #000000;
+            --sidebar-width: 260px;
+            --topbar-height: 60px;
+            --body-bg: #fcfcfc;
+            --card-bg: #ffffff;
+            --border-color: #e5e5e5;
+            --text-main: #0a0a0a;
+            --text-muted: #737373;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        /* ─── TOP BAR ─── */
+        .topbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: var(--topbar-height);
+            background-color: #000000;
+            display: flex;
+            align-items: center;
+            padding: 0 1.25rem;
+            z-index: 1050;
+            gap: 1rem;
+            border-bottom: 1px solid #262626;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .hamburger-btn:hover { background: #1a1a1a; }
+        .hamburger-btn span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: #ffffff;
+            border-radius: 1px;
+            transition: all 0.3s ease;
+        }
+        /* Animated X when sidebar open */
+        body.sidebar-open .hamburger-btn span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+        body.sidebar-open .hamburger-btn span:nth-child(2) { opacity: 0; }
+        body.sidebar-open .hamburger-btn span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        .topbar-brand {
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .topbar-brand:hover { color: #ffffff; }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .specialist-pill {
+            background: #171717;
+            border: 1px solid #333333;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.8rem;
+            color: #d4d4d4;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .specialist-pill strong { color: #ffffff; }
+
+        /* ─── SIDEBAR ─── */
+        .sidebar {
+            position: fixed;
+            top: var(--topbar-height);
+            left: calc(-1 * var(--sidebar-width));
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--topbar-height));
+            background: #000000;
+            border-right: 1px solid #262626;
+            z-index: 1040;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            padding: 1.5rem 0 2rem;
+            display: flex;
+            flex-direction: column;
+        }
+        body.sidebar-open .sidebar { left: 0; }
+
+        .sidebar-section-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #737373;
+            padding: 0 1.25rem;
+            margin: 1.25rem 0 0.5rem;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.65rem 1.25rem;
+            color: #a3a3a3;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 0;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-link:hover {
+            color: #ffffff;
+            background: #171717;
+            border-left-color: #737373;
+        }
+        .sidebar-link.active {
+            color: #ffffff;
+            background: #262626;
+            border-left-color: #ffffff;
+            font-weight: 600;
+        }
+        .sidebar-link .icon { font-size: 1.05rem; width: 20px; text-align: center; }
+
+        .sidebar-divider {
+            border-top: 1px solid #262626;
+            margin: 1rem 1.25rem;
+        }
+
+        /* Overlay when sidebar is open on small screens */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1039;
+        }
+        body.sidebar-open .sidebar-overlay { display: block; }
+
+        /* ─── MAIN CONTENT ─── */
+        .main-content {
+            margin-top: calc(var(--topbar-height) + 1.25rem);
+            padding: 1.5rem 1.75rem 2.5rem;
+            min-height: calc(100vh - var(--topbar-height));
+            transition: margin-left 0.3s ease;
+        }
+
+        /* ─── CARDS ─── */
+        .card-custom {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            padding: 1.5rem;
+        }
+
+        /* ─── BUTTONS ─── */
+        .btn-primary-custom {
+            background-color: #000000;
+            border: 1px solid #000000;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.6rem 1.4rem;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+        .btn-primary-custom:hover {
+            background-color: #262626;
+            border-color: #262626;
+            color: #ffffff;
+        }
+        .btn-secondary-custom {
+            background-color: #ffffff;
+            border: 1px solid #000000;
+            color: #000000;
+            font-weight: 600;
+            padding: 0.6rem 1.4rem;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .btn-secondary-custom:hover {
+            background-color: #000000;
+            border-color: #000000;
+            color: #ffffff;
+        }
+
+        /* ─── STRICT BLACK & WHITE OVERRIDES ─── */
+        .badge.bg-primary, .badge.bg-primary-subtle, .badge.bg-info-subtle, .badge.bg-success, .badge.bg-warning, .badge.bg-danger {
+            background-color: #f5f5f5 !important;
+            color: #000000 !important;
+            border: 1px solid #d4d4d4 !important;
+        }
+        .border-primary, .border-info, .border-success, .border-warning, .border-danger {
+            border-color: #000000 !important;
+        }
+        .text-primary, .text-info, .text-success, .text-warning, .text-danger {
+            color: #000000 !important;
+        }
+        .btn-primary {
+            background-color: #000000 !important;
+            border-color: #000000 !important;
+            color: #ffffff !important;
+        }
+        .btn-primary:hover {
+            background-color: #262626 !important;
+            border-color: #262626 !important;
+            color: #ffffff !important;
+        }
+        .btn-outline-primary {
+            color: #000000 !important;
+            border-color: #000000 !important;
+            background-color: transparent !important;
+        }
+        .btn-outline-primary:hover {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+        }
+        .btn-outline-secondary {
+            color: #000000 !important;
+            border-color: #d4d4d4 !important;
+            background-color: #ffffff !important;
+        }
+        .btn-outline-secondary:hover {
+            background-color: #000000 !important;
+            border-color: #000000 !important;
+            color: #ffffff !important;
+        }
+        .progress {
+            background-color: #e5e5e5 !important;
+            border-radius: 4px;
+        }
+        .progress-bar {
+            background-color: #000000 !important;
+        }
+        .progress-bar.bg-secondary-subtle {
+            background-color: #a3a3a3 !important;
+        }
+        .alert {
+            background-color: #fafafa !important;
+            border: 1px solid #d4d4d4 !important;
+            color: #000000 !important;
+        }
+        .table {
+            color: #000000 !important;
+        }
+
+        /* ─── FOOTER ─── */
+        footer {
+            border-top: 1px solid var(--border-color);
+            background: #ffffff;
+            padding: 1.25rem 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-align: center;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    {% if session.get('user') %}
+    <!-- ═══ TOP BAR ═══ -->
+    <header class="topbar">
+        <button class="hamburger-btn" id="hamburgerBtn" title="Toggle Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a class="topbar-brand" href="{{ url_for('home_view') }}">
+            🧠 NeuroFusion AI
+        </a>
+        <div class="topbar-right">
+            <div class="specialist-pill d-none d-sm-flex">
+                <strong>{{ session['user'].get('full_name', 'Specialist') }}</strong>
+                <span class="text-secondary">•</span>
+                <span>{{ session['user'].get('role', 'Radiologist') }}</span>
+            </div>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm px-3" style="border-radius:6px; font-weight:500; font-size:0.82rem;">
+                Sign Out
+            </a>
+        </div>
+    </header>
+
+    <!-- Sidebar overlay (closes sidebar on click outside) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-section-label">Navigation</div>
+
+        <a href="{{ url_for('home_view') }}" class="sidebar-link {% if active_page == 'home' %}active{% endif %}">
+            <span class="icon">🏠</span> Home Page
+        </a>
+        <a href="{{ url_for('intake_view') }}" class="sidebar-link {% if active_page == 'intake' %}active{% endif %}">
+            <span class="icon">📋</span> New Intake
+        </a>
+        <a href="{{ url_for('patients_view') }}" class="sidebar-link {% if active_page == 'patients' %}active{% endif %}">
+            <span class="icon">👤</span> Patient Information
+        </a>
+
+
+
+        <div style="margin-top: auto; padding: 1.25rem;">
+            <a href="{{ url_for('logout') }}" class="sidebar-link" style="border-radius:8px; color:#f87171;">
+                <span class="icon">🚪</span> Sign Out
+            </a>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-3">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert" style="border-radius:8px;">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container text-center">
+            <strong>NeuroFusion AI</strong>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ── Hamburger sidebar toggle
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        if (hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', () => {
+                document.body.classList.toggle('sidebar-open');
+            });
+        }
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', () => {
+                document.body.classList.remove('sidebar-open');
+            });
+        }
+        // Close sidebar when a nav link is clicked
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', () => {
+                document.body.classList.remove('sidebar-open');
+            });
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

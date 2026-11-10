@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Clinician Portal — NeuroFusion AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-12 col-md-8 col-lg-5">
+        <!-- Logo Header -->
+        <div class="text-center mb-4">
+            <div style="font-size: 2.8rem; line-height: 1;">🧠</div>
+            <h2 class="fw-bold mt-2 mb-1" style="color: #000000; letter-spacing: -0.5px;">NeuroFusion AI</h2>
+        </div>
+
+        <!-- Authentication Card -->
+        <div class="card-custom">
+            <!-- Nav Tabs -->
+            <ul class="nav nav-pills nav-fill mb-3 p-1 bg-white border rounded-2" id="authTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold text-white bg-dark" id="signin-tab" data-bs-toggle="pill" data-bs-target="#signin" type="button" role="tab" style="font-size:0.9rem;">
+                        🔐 Clinician Sign In
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold text-dark" id="register-tab" data-bs-toggle="pill" data-bs-target="#register" type="button" role="tab" style="font-size:0.9rem;">
+                        📝 Register Account
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content pt-2" id="authTabsContent">
+                <!-- ── SIGN IN TAB -->
+                <div class="tab-pane fade show active" id="signin" role="tabpanel">
+                    <form action="{{ url_for('login_post') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Clinician Username</label>
+                            <input type="text" class="form-control" name="username" placeholder="e.g. doctor" required autofocus>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Access Key / Password</label>
+                            <input type="password" class="form-control" name="password" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2">
+                            Authenticate &amp; Enter Workstation
+                        </button>
+                    </form>
+                </div>
+
+                <!-- ── REGISTER TAB -->
+                <div class="tab-pane fade" id="register" role="tabpanel">
+                    <form action="{{ url_for('register_post') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Full Name &amp; Title</label>
+                            <input type="text" class="form-control" name="full_name" placeholder="e.g. Dr. Alex Mercer, MD" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Clinical Specialization</label>
+                            <select class="form-select" name="role">
+                                <option value="Attending Radiologist" selected>Attending Radiologist</option>
+                                <option value="Consultant Neurosurgeon">Consultant Neurosurgeon</option>
+                                <option value="Clinical Neurologist">Clinical Neurologist</option>
+                                <option value="Radiology Resident / Fellow">Radiology Resident / Fellow</option>
+                                <option value="Medical Specialist">Medical Specialist</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Preferred Username</label>
+                            <input type="text" class="form-control" name="username" placeholder="e.g. alex_mercer" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Create Password</label>
+                            <input type="password" class="form-control" name="password" placeholder="Minimum 4 characters" minlength="4" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Confirm Password</label>
+                            <input type="password" class="form-control" name="confirm_password" placeholder="Re-enter password" minlength="4" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary-custom w-100 py-2 mt-2">
+                            Complete Specialist Registration
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

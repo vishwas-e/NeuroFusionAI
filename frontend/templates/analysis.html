@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Workstation — NeuroFusion AI{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Header banner -->
+    <div class="col-12 mb-3">
+        <div class="card-custom">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h3 class="fw-bold mb-1" style="color: #1e293b; font-size:1.3rem;">Diagnostic Evaluation Report</h3>
+                    <p class="text-muted mb-0" style="font-size: 0.88rem;">
+                        Multimodal deep convolutional feature extraction paired with Grad-CAM explainability localization.
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('intake_view') }}" class="btn btn-primary-custom btn-sm">
+                        + New Intake
+                    </a>
+                    <a href="{{ url_for('patients_view') }}" class="btn btn-secondary-custom btn-sm">
+                        Patient Information
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Patient Case Selector & Switcher ═══ -->
+{% if all_analyses %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card-custom py-3">
+            <div class="row align-items-center g-2">
+                <div class="col-12 col-md-4 col-lg-3">
+                    <label class="fw-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-size:0.9rem;">
+                        <span>👤</span> Select Patient Case:
+                    </label>
+                </div>
+                <div class="col-12 col-md-8 col-lg-6">
+                    <select class="form-select form-select-sm" onchange="if(this.value) window.location.href='{{ url_for('analysis_view') }}?id=' + this.value;">
+                        {% for a in all_analyses %}
+                        <option value="{{ a.id }}" {% if result and result.id == a.id %}selected{% endif %}>
+                            {{ a.patient_id }} — {{ (a.predicted_class or '')|replace('_', ' ')|title }} ({{ "%.1f"|format((a.confidence or 0)*100) }}%) • {{ a.analysis_date }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-lg-3 text-lg-end">
+                    <span class="badge bg-light text-secondary border px-2 py-1" style="font-size:0.78rem;">
+                        {{ all_analyses|length }} Total Cases Evaluated
+                    </span>
+                </div>
+            </div>
+
+            <!-- Quick-switch patient pills -->
+            <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top flex-wrap" style="font-size: 0.82rem;">
+                <span class="text-muted fw-semibold">Quick Switch:</span>
+                {% for a in all_analyses %}
+                <a href="{{ url_for('analysis_view', id=a.id) }}" 
+                   class="btn btn-sm {% if result and result.id == a.id %}btn-dark text-white{% else %}btn-outline-secondary bg-light text-dark{% endif %}"
+                   style="border-radius: 20px; padding: 2px 12px; font-size: 0.8rem;">
+                    {{ a.patient_id }}
+                    <span class="badge {% if result and result.id == a.id %}bg-light text-dark{% else %}bg-secondary-subtle text-secondary{% endif %} ms-1">
+                        {{ (a.predicted_class or '')|replace('_', ' ')|title }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if result %}
+<div class="row g-4">
+    <!-- ── Left Column: Diagnostic Classification & Probabilities -->
+    <div class="col-12 col-lg-6">
+        <div class="card-custom h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0" style="color:#1e293b;">Pathology Risk Assessment</h5>
+                <span class="badge bg-light text-dark border px-2 py-1" style="font-size:0.75rem;">
+                    {{ result.get('model_used', 'Multimodal Deep Feature Fusion') }}
+                </span>
+            </div>
+
+            <!-- Main Classification Tile -->
+            <div class="p-3 bg-light rounded-3 mb-3 border">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <div class="text-secondary fw-semibold" style="font-size: 0.78rem; text-transform:uppercase; letter-spacing:0.5px;">
+                            Inferred Pathology
+                        </div>
+                        <div class="fw-bold" style="font-size: 1.85rem; color:#1e293b;">
+                            {{ result['predicted_class']|replace('_', ' ')|title }}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="text-secondary fw-semibold" style="font-size: 0.78rem; text-transform:uppercase; letter-spacing:0.5px;">
+                            Model Confidence
+                        </div>
+                        <div class="badge bg-dark text-white px-3 py-2 fw-bold" style="font-size: 1.3rem;">
+                            {{ "%.1f"|format(result['confidence'] * 100) }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── REASON FOR PREDICTION (DIRECT EXPLANATION FOR DOCTOR) ── -->
+            {% if result.get('explanation') %}
+            <div class="p-3 mb-4 rounded-3 border" style="background-color: #f8fafc; border-left: 4px solid #0f172a !important;">
+                <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                    <span style="font-size: 1.15rem;">🔍</span>
+                    <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">
+                        Reason for Prediction:
+                    </h6>
+                </div>
+                <div class="mb-2" style="font-size: 0.85rem; line-height: 1.5;">
+                    <strong class="text-dark d-block mb-1">📷 Why the MRI Scan Shows This:</strong>
+                    <span class="text-secondary">{{ result.explanation.mri_reason }}</span>
+                </div>
+                <div class="mb-2" style="font-size: 0.85rem; line-height: 1.5;">
+                    <strong class="text-dark d-block mb-1">📋 Why the Patient's Symptoms Match:</strong>
+                    <span class="text-secondary">{{ result.explanation.clinical_reason }}</span>
+                </div>
+                {% if result.explanation.get('score_explanation') %}
+                <div class="mb-2" style="font-size: 0.85rem; line-height: 1.5;">
+                    <strong class="text-dark d-block mb-1">📊 What the Percentages &amp; Bars Mean:</strong>
+                    <span class="text-secondary">{{ result.explanation.score_explanation }}</span>
+                </div>
+                {% endif %}
+                <div style="font-size: 0.83rem; line-height: 1.45;">
+                    <strong class="text-dark d-block mb-1">💡 Conclusion:</strong>
+                    <span class="text-secondary">{{ result.explanation.rule_out_reason }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Class Likelihood Progress Bars -->
+            <h6 class="fw-bold text-secondary mb-3" style="font-size: 0.85rem; text-transform:uppercase;">
+                Multimodal Class Likelihood Distribution
+            </h6>
+            <div class="mb-4">
+                {% for cls_name, prob in result['probabilities'].items() %}
+                {% set pct = prob * 100 %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1" style="font-size: 0.85rem;">
+                        <span class="fw-medium text-dark">{{ cls_name|replace('_', ' ')|title }}</span>
+                        <span class="fw-bold {% if cls_name == result['predicted_class'] %}text-primary{% else %}text-muted{% endif %}">
+                            {{ "%.1f"|format(pct) }}%
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar {% if cls_name == result['predicted_class'] %}bg-primary{% else %}bg-secondary-subtle{% endif %}" 
+                             role="progressbar" style="width: {{ pct }}%;" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Patient Demographics & Anamnesis Summary Table -->
+            <h6 class="fw-bold text-secondary mb-2" style="font-size: 0.85rem; text-transform:uppercase;">
+                Evaluated Case Anamnesis
+            </h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-0" style="font-size:0.85rem;">
+                    <tbody>
+                        <tr>
+                            <th class="table-light text-secondary w-40">Patient Name</th>
+                            <td><strong>{{ result.get('patient_info', {}).get('patient_id', '—') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th class="table-light text-secondary">Age &amp; Sex</th>
+                            <td>{{ result.get('patient_info', {}).get('age', '—') }} Years &bull; {{ result.get('patient_info', {}).get('gender', '—') }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light text-secondary">Persistent Cephalalgia</th>
+                            <td>{{ result.get('patient_info', {}).get('headache', 'No') }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light text-secondary">Visual Deficits</th>
+                            <td>{{ result.get('patient_info', {}).get('vision_problems', 'No') }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light text-secondary">Epileptic Episodes</th>
+                            <td>{{ result.get('patient_info', {}).get('seizures', 'No') }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light text-secondary">Cognitive Impairment</th>
+                            <td>{{ result.get('patient_info', {}).get('memory_loss', 'No') }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light text-secondary">Attending Specialist</th>
+                            <td>
+                                <strong class="text-primary">{{ result.get('doctor_name') or session['user'].get('full_name', 'Attending Specialist') }}</strong>
+                                <span class="text-muted">({{ result.get('doctor_role') or session['user'].get('role', 'Radiologist') }})</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+        <!-- ── Right Column: Visual Tumor Localization & Colored Segmentation -->
+    <div class="col-12 col-lg-6">
+        <div class="card-custom h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                    <span>🎯</span> Visual Tumor Localization &amp; Colored Segmentation
+                </h5>
+                <span class="badge bg-dark text-white px-2 py-1" style="font-size:0.75rem;">
+                    Deep Saliency + Boundary
+                </span>
+            </div>
+            <p class="text-muted mb-3" style="font-size:0.84rem;">
+                The AI isolates the tumor region, colors the abnormal lesion in vibrant contrast, and traces the outer tumor boundary for specialist review.
+            </p>
+
+            <!-- Image View Selector Tabs -->
+            <ul class="nav nav-pills gap-1 mb-3 p-1 bg-light rounded border" id="imagingTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active btn-sm py-1 px-3 fw-semibold" id="tab-segmented" data-bs-toggle="pill" data-bs-target="#view-segmented" type="button" role="tab" style="font-size:0.82rem;">
+                        🎯 Colored Tumor Part
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link btn-sm py-1 px-3 fw-semibold text-secondary" id="tab-comparison" data-bs-toggle="pill" data-bs-target="#view-comparison" type="button" role="tab" style="font-size:0.82rem;">
+                        👥 Side-by-Side
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link btn-sm py-1 px-3 fw-semibold text-secondary" id="tab-gradcam" data-bs-toggle="pill" data-bs-target="#view-gradcam" type="button" role="tab" style="font-size:0.82rem;">
+                        🌈 Grad-CAM Heatmap
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link btn-sm py-1 px-3 fw-semibold text-secondary" id="tab-original" data-bs-toggle="pill" data-bs-target="#view-original" type="button" role="tab" style="font-size:0.82rem;">
+                        📷 Original MRI
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="imagingTabsContent">
+                <!-- 1. Colored Tumor Part View (Default) -->
+                <div class="tab-pane fade show active text-center" id="view-segmented" role="tabpanel">
+                    <div class="border rounded-3 p-3 bg-light position-relative">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong class="text-dark" style="font-size:0.85rem;">
+                                🎯 Tumor Part Highlighted &amp; Boundary Outline
+                            </strong>
+                            {% if result['predicted_class']|lower != 'notumor' %}
+                            <span class="badge bg-danger text-white px-2 py-1" style="font-size:0.75rem;">
+                                ● Active Tumor Highlighted
+                            </span>
+                            {% else %}
+                            <span class="badge bg-success text-white px-2 py-1" style="font-size:0.75rem;">
+                                ● Clean Healthy Brain
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        {% if result.get('seg_img_name') %}
+                        <img src="{{ url_for('media_file', filename=result['seg_img_name']) }}" class="img-fluid rounded border shadow-sm" style="max-height: 290px;" alt="Colored Tumor Segmentation">
+                        {% elif result.get('gradcam_img_name') %}
+                        <img src="{{ url_for('media_file', filename=result['gradcam_img_name']) }}" class="img-fluid rounded border shadow-sm" style="max-height: 290px;" alt="Grad-CAM Saliency">
+                        {% else %}
+                        <div class="p-5 text-muted">No scan overlay available.</div>
+                        {% endif %}
+
+                        <div class="mt-2 text-start p-2 bg-white rounded border" style="font-size:0.8rem;">
+                            {% if result['predicted_class']|lower != 'notumor' %}
+                            <span class="text-danger fw-bold">🔴 Colored Area:</span>
+                            <span class="text-secondary">Shows the detected tumor mass. The crisp white line marks the estimated outer tumor margin.</span>
+                            {% else %}
+                            <span class="text-success fw-bold">🟢 No Tumor:</span>
+                            <span class="text-secondary">Normal anatomical symmetry preserved. No abnormal color highlights or tumor boundaries found.</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Side-by-Side Comparison View -->
+                <div class="tab-pane fade" id="view-comparison" role="tabpanel">
+                    <div class="row g-2">
+                        <div class="col-6 text-center">
+                            <div class="border rounded-3 p-2 bg-light">
+                                <strong class="d-block text-secondary mb-1" style="font-size:0.78rem;">Original Scan</strong>
+                                {% if result.get('mri_img_name') %}
+                                <img src="{{ url_for('media_file', filename=result['mri_img_name']) }}" class="img-fluid rounded border" style="max-height: 210px;" alt="Original MRI">
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-6 text-center">
+                            <div class="border rounded-3 p-2 bg-light">
+                                <strong class="d-block text-danger mb-1" style="font-size:0.78rem;">Color Highlighted Tumor</strong>
+                                {% if result.get('seg_img_name') %}
+                                <img src="{{ url_for('media_file', filename=result['seg_img_name']) }}" class="img-fluid rounded border" style="max-height: 210px;" alt="Segmented Tumor">
+                                {% elif result.get('gradcam_img_name') %}
+                                <img src="{{ url_for('media_file', filename=result['gradcam_img_name']) }}" class="img-fluid rounded border" style="max-height: 210px;" alt="GradCAM">
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Grad-CAM Heatmap View -->
+                <div class="tab-pane fade text-center" id="view-gradcam" role="tabpanel">
+                    <div class="border rounded-3 p-3 bg-light">
+                        <strong class="d-block text-secondary mb-2" style="font-size:0.85rem;">Grad-CAM Saliency Gradient Map (conv5_block3_out)</strong>
+                        {% if result.get('gradcam_img_name') %}
+                        <img src="{{ url_for('media_file', filename=result['gradcam_img_name']) }}" class="img-fluid rounded border shadow-sm" style="max-height: 290px;" alt="Grad-CAM Saliency">
+                        {% endif %}
+                        <div class="mt-2 text-muted" style="font-size:0.78rem;">
+                            Red/Orange = high neural network focus &bull; Blue = normal background tissue
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Original MRI View -->
+                <div class="tab-pane fade text-center" id="view-original" role="tabpanel">
+                    <div class="border rounded-3 p-3 bg-light">
+                        <strong class="d-block text-secondary mb-2" style="font-size:0.85rem;">Diagnostic MRI Grayscale Sequence</strong>
+                        {% if result.get('mri_img_name') %}
+                        <img src="{{ url_for('media_file', filename=result['mri_img_name']) }}" class="img-fluid rounded border shadow-sm" style="max-height: 290px;" alt="Original MRI">
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-cdss mt-3 mb-0" style="font-size:0.82rem;">
+                🛡️ <strong>Radiological Sign-Off Note</strong>: Tumor boundary highlight and saliency maps are committed to institutional storage to assist specialist verification.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ All Patient Cases Section (Like Patient Information Page) ═══ -->
+{% if all_analyses %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0">
+                    📂 All Evaluated Patient Cases
+                </h5>
+                <span class="text-muted" style="font-size:0.85rem;">
+                    Showing <strong>{{ all_analyses|length }}</strong> case(s) evaluated by you
+                </span>
+            </div>
+
+            <div class="accordion" id="analysisAllAccordion">
+                {% for a in all_analyses %}
+                <div class="accordion-item mb-2 border rounded-3 overflow-hidden {% if result and result.id == a.id %}border-primary border-2{% endif %}">
+                    <h2 class="accordion-header" id="headingA{{ a.id }}">
+                        <button class="accordion-button {% if not (result and result.id == a.id) %}collapsed{% endif %} bg-light py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseA{{ a.id }}" aria-expanded="{% if result and result.id == a.id %}true{% else %}false{% endif %}" aria-controls="collapseA{{ a.id }}">
+                            <div class="d-flex justify-content-between align-items-center w-100 me-3 flex-wrap gap-2">
+                                <div>
+                                    <strong class="text-primary me-2">{{ a.patient_id }}</strong>
+                                    <span class="badge bg-white text-dark border me-2">{{ a.gender or '—' }}, Age {{ a.age or '—' }}</span>
+                                    <span class="text-muted" style="font-size:0.82rem;">Evaluated: {{ a.analysis_date }}</span>
+                                    {% if result and result.id == a.id %}
+                                    <span class="badge bg-success ms-2">Currently Viewing</span>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-bold" style="color:#0f172a;">{{ (a.predicted_class or '')|replace('_', ' ')|title }}</span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold">
+                                        {{ "%.1f"|format((a.confidence or 0) * 100) }}%
+                                    </span>
+                                </div>
+                            </div>
+                        </button>
+                    </h2>
+                    <div id="collapseA{{ a.id }}" class="accordion-collapse collapse {% if result and result.id == a.id %}show{% endif %}" aria-labelledby="headingA{{ a.id }}" data-bs-parent="#analysisAllAccordion">
+                        <div class="accordion-body bg-white p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+                                <div>
+                                    <span class="text-muted" style="font-size:0.85rem;">Record ID:</span>
+                                    <strong>#{{ a.id }}</strong> &bull;
+                                    <span class="text-muted" style="font-size:0.85rem;">Patient Name:</span>
+                                    <strong>{{ a.patient_id }}</strong> &bull;
+                                    <span class="text-muted" style="font-size:0.85rem;">Scan File:</span>
+                                    <code>{{ a.mri_filename or 'Sequence.png' }}</code>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('analysis_view', id=a.id) }}" class="btn btn-primary-custom btn-sm">
+                                        🔬 View Full Analysis Report
+                                    </a>
+                                    <a href="{{ url_for('reanalyze', patient_id=a.patient_id) }}" class="btn btn-secondary-custom btn-sm">
+                                        🔄 Re-Analyze Case
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="row g-4">
+                                <div class="col-12 col-md-6">
+                                    <h6 class="fw-bold text-secondary mb-2" style="font-size:0.85rem; text-transform:uppercase;">
+                                        Patient Anamnesis &amp; Symptoms
+                                    </h6>
+                                    <div class="p-3 bg-light rounded-2 border" style="font-size:0.88rem;">
+                                        <div class="row g-2">
+                                            <div class="col-6"><strong>Persistent Headache:</strong> {{ a.headache or '—' }}</div>
+                                            <div class="col-6"><strong>Visual Deficits:</strong> {{ a.vision_problems or '—' }}</div>
+                                            <div class="col-6"><strong>Epileptic Episodes:</strong> {{ a.seizures or '—' }}</div>
+                                            <div class="col-6"><strong>Nausea / Vomiting:</strong> {{ a.nausea or '—' }}</div>
+                                            <div class="col-12"><strong>Cognitive Impairment:</strong> {{ a.memory_loss or '—' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <h6 class="fw-bold text-secondary mb-2" style="font-size:0.85rem; text-transform:uppercase;">
+                                        Archived Visual Media
+                                    </h6>
+                                    <div class="row g-2">
+                                        {% if a.mri_image_path %}
+                                        <div class="col-6 text-center">
+                                            <div class="border rounded p-1 bg-white">
+                                                <small class="text-muted d-block" style="font-size:0.75rem;">Diagnostic MRI</small>
+                                                <img src="{{ url_for('media_file', filename=a.mri_image_path|replace('\\', '/')|basename) }}" class="img-fluid rounded border mt-1" alt="Original MRI">
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% if a.gradcam_image_path %}
+                                        <div class="col-6 text-center">
+                                            <div class="border rounded p-1 bg-white">
+                                                <small class="text-primary d-block" style="font-size:0.75rem;">Grad-CAM Saliency</small>
+                                                <img src="{{ url_for('media_file', filename=a.gradcam_image_path|replace('\\', '/')|basename) }}" class="img-fluid rounded border mt-1" alt="Grad-CAM">
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<!-- Empty State -->
+<div class="row justify-content-center py-5">
+    <div class="col-12 col-md-8 text-center">
+        <div class="card-custom py-5 px-4">
+            <div style="font-size: 3.5rem;">🔬</div>
+            <h4 class="fw-bold mt-3 text-dark">No Active Analysis Report Selected</h4>
+            <p class="text-muted mx-auto" style="max-width: 480px; font-size:0.92rem;">
+                Select a completed case from <a href="{{ url_for('patients_view') }}">Patient Information</a> to review its report, or start a new intake evaluation.
+            </p>
+            <div class="d-flex justify-content-center gap-2 mt-3">
+                <a href="{{ url_for('intake_view') }}" class="btn btn-primary-custom px-4">
+                    🚀 Start New Case Intake
+                </a>
+                <a href="{{ url_for('patients_view') }}" class="btn btn-secondary-custom px-4">
+                    👥 View Patient Information
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

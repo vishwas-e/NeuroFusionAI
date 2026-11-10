@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}New Intake — NeuroFusion AI{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Header banner -->
+    <div class="col-12 mb-3">
+        <div class="card-custom">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h3 class="fw-bold mb-1" style="color: #1e293b; font-size:1.3rem;">New Patient Case Intake</h3>
+                    <p class="text-muted mb-0" style="font-size: 0.88rem;">
+                        Standardized clinical demographic profiles, neurological symptom indicators, and brain MRI scans.
+                    </p>
+                </div>
+                <div>
+                    <span class="badge bg-light text-dark border px-3 py-2 fw-medium">
+                        Intake &amp; Upload
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if reanalyze_data %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-secondary d-flex justify-content-between align-items-center mb-0" style="border-radius:8px;">
+            <div>
+                <strong>🔄 Re-Analysis Workflow Active</strong>: Preloaded record for Patient <code>{{ reanalyze_data.get('patient_id') }}</code>. Upload a new scan sequence to execute re-evaluation.
+            </div>
+            <a href="{{ url_for('intake_view') }}" class="btn btn-outline-secondary btn-sm bg-white">
+                Clear Preloaded Data
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+        <div class="card-custom">
+            <form action="{{ url_for('predict_post') }}" method="POST" enctype="multipart/form-data">
+                <!-- ── Section 1: Patient Demographics -->
+                <div class="border-bottom pb-3 mb-4">
+                    <h5 class="fw-bold text-dark mb-1">1. Patient Demographic Profile</h5>
+                    <p class="text-muted mb-3" style="font-size:0.85rem;">Document patient name and biological demographics.</p>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Patient Name *</label>
+                            <input type="text" class="form-control" name="patient_id" placeholder="e.g. John Doe or Jane Smith" 
+                                   value="{{ reanalyze_data.get('patient_id', '') if reanalyze_data else '' }}" required>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Patient Age (Years) *</label>
+                            <input type="number" class="form-control" name="age" min="1" max="120" 
+                                   value="{{ reanalyze_data.get('age', 35) if reanalyze_data else 35 }}" required>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Biological Sex *</label>
+                            <select class="form-select" name="gender">
+                                <option value="Male" {% if reanalyze_data and reanalyze_data.get('gender') == 'Male' %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if reanalyze_data and reanalyze_data.get('gender') == 'Female' %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if reanalyze_data and reanalyze_data.get('gender') == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Section 2: Neurological Symptoms -->
+                <div class="border-bottom pb-3 mb-4">
+                    <h5 class="fw-bold text-dark mb-1">2. Neurological Symptom Anamnesis</h5>
+                    <p class="text-muted mb-3" style="font-size:0.85rem;">Recorded verified neurological indicators from clinician patient assessment.</p>
+                    
+                    <div class="p-3 bg-light rounded-3 border">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-medium text-dark mb-1" style="font-size: 0.85rem;">Persistent Headache</label>
+                                <select class="form-select form-select-sm" name="headache">
+                                    <option value="No" {% if reanalyze_data and reanalyze_data.get('headache') == 'No' %}selected{% endif %}>No</option>
+                                    <option value="Yes" {% if reanalyze_data and reanalyze_data.get('headache') == 'Yes' %}selected{% endif %}>Yes</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-medium text-dark mb-1" style="font-size: 0.85rem;">Visual Disturbance / Deficits</label>
+                                <select class="form-select form-select-sm" name="vision_problems">
+                                    <option value="No" {% if reanalyze_data and reanalyze_data.get('vision_problems') == 'No' %}selected{% endif %}>No</option>
+                                    <option value="Yes" {% if reanalyze_data and reanalyze_data.get('vision_problems') == 'Yes' %}selected{% endif %}>Yes</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-medium text-dark mb-1" style="font-size: 0.85rem;">Epileptic Episodes / Seizures</label>
+                                <select class="form-select form-select-sm" name="seizures">
+                                    <option value="No" {% if reanalyze_data and reanalyze_data.get('seizures') == 'No' %}selected{% endif %}>No</option>
+                                    <option value="Yes" {% if reanalyze_data and reanalyze_data.get('seizures') == 'Yes' %}selected{% endif %}>Yes</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-medium text-dark mb-1" style="font-size: 0.85rem;">Nausea / Projectile Vomiting</label>
+                                <select class="form-select form-select-sm" name="nausea">
+                                    <option value="No" {% if reanalyze_data and reanalyze_data.get('nausea') == 'No' %}selected{% endif %}>No</option>
+                                    <option value="Yes" {% if reanalyze_data and reanalyze_data.get('nausea') == 'Yes' %}selected{% endif %}>Yes</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-medium text-dark mb-1" style="font-size: 0.85rem;">Cognitive Impairment / Memory Deficit</label>
+                                <select class="form-select form-select-sm" name="memory_loss">
+                                    <option value="No" {% if reanalyze_data and reanalyze_data.get('memory_loss') == 'No' %}selected{% endif %}>No</option>
+                                    <option value="Yes" {% if reanalyze_data and reanalyze_data.get('memory_loss') == 'Yes' %}selected{% endif %}>Yes</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Physician Impression Notes (Optional)</label>
+                        <textarea class="form-control" name="notes" rows="2" placeholder="e.g. Patient presents with localized frontal cephalalgia and focal deficit …">{{ reanalyze_data.get('notes', '') if reanalyze_data else '' }}</textarea>
+                    </div>
+                </div>
+
+                <!-- ── Section 3: Diagnostic MRI Upload -->
+                <div class="pb-3 mb-4">
+                    <h5 class="fw-bold text-dark mb-1">3. Diagnostic MRI Sequence Upload</h5>
+                    <p class="text-muted mb-3" style="font-size:0.85rem;">Upload standardized brain MRI sequences (Axial, Coronal, Sagittal) in JPG, PNG, or TIFF format.</p>
+                    
+                    <div class="p-4 border-2 border-dashed rounded-3 bg-light text-center" style="border-style:dashed; border-color:#cbd5e1;">
+                        <input type="file" class="form-control w-75 mx-auto" name="mri_file" accept=".jpg,.jpeg,.png,.bmp,.tiff" required id="mriFileInput" onchange="previewMRI(event)">
+                        <div class="text-muted mt-2" style="font-size:0.8rem;">
+                            Files will be fed to ResNet50 deep convolutional feature extractor.
+                        </div>
+                        <div id="previewContainer" class="mt-3 d-none">
+                            <span class="text-secondary fw-semibold d-block mb-1" style="font-size:0.8rem;">Image Preview</span>
+                            <img id="mriPreviewImg" src="#" alt="Preview" class="img-thumbnail" style="max-height: 220px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-primary-custom flex-grow-1 py-2 fs-6">
+                        🚀 Submit Case &amp; Execute Diagnostic AI Evaluation
+                    </button>
+                    <a href="{{ url_for('intake_view') }}" class="btn btn-secondary-custom py-2">
+                        Clear Form
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function previewMRI(event) {
+    const input = event.target;
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const container = document.getElementById('previewContainer');
+            const img = document.getElementById('mriPreviewImg');
+            img.src = e.target.result;
+            container.classList.remove('d-none');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}
